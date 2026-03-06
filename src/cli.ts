@@ -1,0 +1,87 @@
+import { parseCommand, formatUsage, DISTILL_VERSION, UsageError } from "./config";
+import { createOllamaSummarizer } from "./summarizer";
+import { DistillSession } from "./stream-distiller";
+import {
+  getPersistedConfigValue,
+  readPersistedConfig,
+  resolveConfigPath,
+  setPersistedConfigValue
+} from "./user-config";
+
+async function run(): Promise<number> {
+  const persisted = await readPersistedConfig(process.env);
+  const command = parseCommand(process.argv.slice(2), process.env, persisted);
+
+  if (command.kind === "help") {
+    process.stdout.write(`${formatUsage()}\n`);
+    return 0;
+  }
+
+  if (command.kind === "version") {
+    process.stdout.write(`${DISTILL_VERSION}\n`);
+    return 0;
+  }
+
+  if (command.kind === "configShow") {
+    process.stdout.write(
+      [
+        `path=${resolveConfigPath(process.env)}`,
+        `model=${persisted.model ?? ""}`,
+        `host=${persisted.host ?? ""}`,
+        `timeout-ms=${persisted.timeoutMs ?? ""}`,
+        `thinking=${persisted.thinking ?? ""}`
+      ].join("\n") + "\n"
+    );
+    return 0;
+  }
+
+  if (command.kind === "configGet") {
+    const value = getPersistedConfigValue(persisted, command.key);
+    process.stdout.write(`${value ?? ""}\n`);
+    return 0;
+  }
+
+  if (command.kind === "configSet") {
+    await setPersistedConfigValue(process.env, command.key, command.value);
+    process.stdout.write(`${command.key}=${String(command.value)}\n`);
+    return 0;
+  }
+
+  if (process.stdin.isTTY) {
+    throw new UsageError("stdin is required.");
+  }
+
+  const session = new DistillSession({
+    summarizer: createOllamaSummarizer(command.config),
+    stdout: process.stdout,
+    isTTY: Boolean(process.stdout.isTTY)
+  });
+
+  await new Promise<void>((resolve, reject) => {
+    process.stdin.on("data", (chunk) => {
+      session.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    });
+    process.stdin.on("end", resolve);
+    process.stdin.on("error", reject);
+    process.stdin.resume();
+  });
+
+  await session.end();
+  return 0;
+}
+
+run()
+  .then((code) => {
+    process.exit(code);
+  })
+  .catch((error) => {
+    if (error instanceof UsageError) {
+      process.stderr.write(`${error.message}\n\n${formatUsage()}\n`);
+      process.exit(error.exitCode);
+    }
+
+    process.stderr.write(
+      error instanceof Error ? `${error.message}\n` : "Unexpected error.\n"
+    );
+    process.exit(1);
+  });
