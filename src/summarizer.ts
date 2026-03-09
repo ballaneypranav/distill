@@ -13,7 +13,7 @@ function requestLLM(
   prompt: string,
   fetchImpl?: typeof fetch
 ): Promise<string> {
-  if (config.provider === "openai") {
+  if (config.provider === "openai" || config.provider === "openrouter") {
     return requestOpenAI({
       baseUrl: config.host,
       apiKey: config.apiKey,
