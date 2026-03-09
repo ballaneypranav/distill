@@ -228,6 +228,15 @@ describe("distill end-to-end", () => {
       "perl -e '$|=1; for (1..8) { print qq(Ran chunk $_\\n); select undef,undef,undef,0.18; }' | " +
       `node ${launcher} 'did the tests pass?'`;
 
+    // Check if expect is available
+    const expectCheck = spawnSync("which", ["expect"], { encoding: "utf8" });
+    if (expectCheck.status !== 0) {
+      console.log("Skipping PTY test: expect not installed");
+      fake.stop();
+      await rm(dir, { recursive: true, force: true });
+      return;
+    }
+
     try {
       runOrThrow(
         "expect",

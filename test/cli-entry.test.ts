@@ -30,6 +30,13 @@ describe("cli entrypoint", () => {
   });
 
   it("fails without stdin when attached to a tty", () => {
+    // Check if expect is available
+    const expectCheck = spawnSync("which", ["expect"], { encoding: "utf8" });
+    if (expectCheck.status !== 0) {
+      console.log("Skipping TTY test: expect not installed");
+      return;
+    }
+
     const result = spawnSync(
       "expect",
       ["-c", `spawn -noecho bun run ${cli} "is this safe?"; expect eof; exit [lindex [wait] 3]`],
