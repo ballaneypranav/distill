@@ -31,8 +31,8 @@ describe("cli entrypoint", () => {
 
   it("fails without stdin when attached to a tty", () => {
     const result = spawnSync(
-      "script",
-      ["-q", "/dev/null", "bun", "run", cli, "is this safe?"],
+      "expect",
+      ["-c", `spawn -noecho bun run ${cli} "is this safe?"; expect eof; exit [lindex [wait] 3]`],
       {
         cwd: root,
         encoding: "utf8"

@@ -230,8 +230,8 @@ describe("distill end-to-end", () => {
 
     try {
       runOrThrow(
-        "script",
-        ["-q", capturePath, "bash", "-c", shellCommand],
+        "expect",
+        ["-c", `log_file ${capturePath}; spawn -noecho bash -c {${shellCommand}}; expect eof; exit [lindex [wait] 3]`],
         root,
         {
           OLLAMA_HOST: fake.host
