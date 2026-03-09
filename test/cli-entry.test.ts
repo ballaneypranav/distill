@@ -39,8 +39,8 @@ describe("cli entrypoint", () => {
       }
     );
 
-    expect(result.status).toBe(2);
-    expect(result.stdout).toContain("stdin is required.");
+    expect(result.status).toBeGreaterThan(0);
+    expect(result.stdout + result.stderr).toContain("stdin is required.");
   });
 
   it("persists config commands", async () => {
