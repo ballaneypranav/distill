@@ -12,10 +12,10 @@ const installDir = await mkdtemp(path.join(tmpdir(), "distill-install-"));
 const currentPlatformPackage = (() => {
   const key = `${process.platform}-${process.arch}`;
   const mapping: Record<string, string> = {
-    "darwin-arm64": "@samuelfaj/distill-darwin-arm64",
-    "darwin-x64": "@samuelfaj/distill-darwin-x64",
-    "linux-arm64": "@samuelfaj/distill-linux-arm64",
-    "linux-x64": "@samuelfaj/distill-linux-x64"
+    "darwin-arm64": "@ballaneypranav/distill-darwin-arm64",
+    "darwin-x64": "@ballaneypranav/distill-darwin-x64",
+    "linux-arm64": "@ballaneypranav/distill-linux-arm64",
+    "linux-x64": "@ballaneypranav/distill-linux-x64"
   };
 
   const value = mapping[key];
@@ -52,7 +52,7 @@ function runOrThrow(command: string, args: string[], cwd: string, env?: NodeJS.P
 
 try {
   runOrThrow("npm", ["pack", "--workspace", currentPlatformPackage, "--pack-destination", packDir], root);
-  runOrThrow("npm", ["pack", "--workspace", "@samuelfaj/distill", "--pack-destination", packDir], root);
+  runOrThrow("npm", ["pack", "--workspace", "@ballaneypranav/distill", "--pack-destination", packDir], root);
   runOrThrow("npm", ["init", "-y"], installDir);
 
   const tarballs = readdirSync(packDir)

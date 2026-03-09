@@ -23,10 +23,10 @@ const INTERACTIVE_DELAY_MS = 1_000;
 const currentPlatformPackage = (() => {
   const key = `${process.platform}-${process.arch}`;
   const mapping: Record<string, string> = {
-    "darwin-arm64": "@samuelfaj/distill-darwin-arm64",
-    "darwin-x64": "@samuelfaj/distill-darwin-x64",
-    "linux-arm64": "@samuelfaj/distill-linux-arm64",
-    "linux-x64": "@samuelfaj/distill-linux-x64"
+    "darwin-arm64": "@ballaneypranav/distill-darwin-arm64",
+    "darwin-x64": "@ballaneypranav/distill-darwin-x64",
+    "linux-arm64": "@ballaneypranav/distill-linux-arm64",
+    "linux-x64": "@ballaneypranav/distill-linux-x64"
   };
 
   const value = mapping[key];
@@ -349,7 +349,7 @@ describe("distill end-to-end", () => {
       );
       runOrThrow(
         "npm",
-        ["pack", "--workspace", "@samuelfaj/distill", "--pack-destination", packDir],
+        ["pack", "--workspace", "@ballaneypranav/distill", "--pack-destination", packDir],
         root
       );
       runOrThrow("npm", ["init", "-y"], installDir);

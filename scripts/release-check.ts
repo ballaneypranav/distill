@@ -37,8 +37,8 @@ for (const binary of binaries) {
 
 const cliManifest = manifests[0];
 
-if (cliManifest.name !== "@samuelfaj/distill") {
-  throw new Error("Main package name must stay @samuelfaj/distill.");
+if (cliManifest.name !== "@ballaneypranav/distill") {
+  throw new Error("Main package name must stay @ballaneypranav/distill.");
 }
 
 if (requirePublishMetadata) {

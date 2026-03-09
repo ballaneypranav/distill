@@ -7,10 +7,10 @@ const { createRequire } = require("node:module");
 const requireFromHere = createRequire(__filename);
 
 const PACKAGE_BY_TARGET = {
-  "darwin-arm64": "@samuelfaj/distill-darwin-arm64",
-  "darwin-x64": "@samuelfaj/distill-darwin-x64",
-  "linux-arm64": "@samuelfaj/distill-linux-arm64",
-  "linux-x64": "@samuelfaj/distill-linux-x64"
+  "darwin-arm64": "@ballaneypranav/distill-darwin-arm64",
+  "darwin-x64": "@ballaneypranav/distill-darwin-x64",
+  "linux-arm64": "@ballaneypranav/distill-linux-arm64",
+  "linux-x64": "@ballaneypranav/distill-linux-x64"
 };
 
 function resolveBinaryPath() {
@@ -29,7 +29,7 @@ function resolveBinaryPath() {
     return path.join(path.dirname(packageJsonPath), "bin", "distill");
   } catch (error) {
     console.error(
-      `[distill] Missing platform package ${packageName}. Reinstall @samuelfaj/distill for this platform.`
+      `[distill] Missing platform package ${packageName}. Reinstall @ballaneypranav/distill for this platform.`
     );
     process.exit(1);
   }

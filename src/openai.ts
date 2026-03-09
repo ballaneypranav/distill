@@ -26,7 +26,7 @@ export async function requestOpenAI({
     };
 
     if (new URL(baseUrl).hostname.includes("openrouter.ai")) {
-      headers["HTTP-Referer"] = "https://github.com/samuelfaj/distill";
+      headers["HTTP-Referer"] = "https://github.com/ballaneypranav/distill";
       headers["X-Title"] = "Distill CLI";
     }
 
