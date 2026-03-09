@@ -216,6 +216,13 @@ describe("distill end-to-end", () => {
   });
 
   it("keeps the spinner moving in a pty while collecting streamed input and summarizing", async () => {
+    // Check if expect is available before creating any resources
+    const expectCheck = spawnSync("which", ["expect"], { encoding: "utf8" });
+    if (expectCheck.status !== 0) {
+      console.log("[SKIP] PTY test: expect not installed");
+      return;
+    }
+
     const fake = await createFakeOllama(async (_body, _index) => {
       await delay(700);
       return new Response(JSON.stringify({ response: "All tests passed." }), {
@@ -227,15 +234,6 @@ describe("distill end-to-end", () => {
     const shellCommand =
       "perl -e '$|=1; for (1..8) { print qq(Ran chunk $_\\n); select undef,undef,undef,0.18; }' | " +
       `node ${launcher} 'did the tests pass?'`;
-
-    // Check if expect is available
-    const expectCheck = spawnSync("which", ["expect"], { encoding: "utf8" });
-    if (expectCheck.status !== 0) {
-      console.log("Skipping PTY test: expect not installed");
-      fake.stop();
-      await rm(dir, { recursive: true, force: true });
-      return;
-    }
 
     try {
       runOrThrow(

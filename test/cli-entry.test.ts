@@ -33,7 +33,7 @@ describe("cli entrypoint", () => {
     // Check if expect is available
     const expectCheck = spawnSync("which", ["expect"], { encoding: "utf8" });
     if (expectCheck.status !== 0) {
-      console.log("Skipping TTY test: expect not installed");
+      console.log("[SKIP] TTY test: expect not installed");
       return;
     }
 
