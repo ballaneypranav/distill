@@ -1,11 +1,12 @@
 import cliPackage from "../packages/cli/package.json";
 
 export const DISTILL_VERSION = cliPackage.version;
-export type Provider = "ollama" | "openai";
+export type Provider = "ollama" | "openai" | "openrouter";
 export const DEFAULT_PROVIDER: Provider = "ollama";
 export const DEFAULT_MODEL = "qwen3.5:2b";
 export const DEFAULT_HOST = "http://127.0.0.1:11434";
 export const DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1";
+export const DEFAULT_OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 export const DEFAULT_TIMEOUT_MS = 90_000;
 export const DEFAULT_IDLE_MS = 1_200;
 export const DEFAULT_INTERACTIVE_GAP_MS = 180;
@@ -112,11 +113,11 @@ function normalizeHost(input: string | undefined): string {
 function parseProvider(input: string): Provider {
   const value = input.trim().toLowerCase();
 
-  if (value === "ollama" || value === "openai") {
-    return value;
+  if (value === "ollama" || value === "openai" || value === "openrouter") {
+    return value as Provider;
   }
 
-  throw new UsageError(`Provider must be "ollama" or "openai".`);
+  throw new UsageError(`Provider must be "ollama", "openai", or "openrouter".`);
 }
 
 export function resolveRuntimeDefaults(
@@ -130,9 +131,14 @@ export function resolveRuntimeDefaults(
   const host = normalizeHost(
     provider === "openai"
       ? (env.OPENAI_BASE_URL ?? persisted.host ?? DEFAULT_OPENAI_BASE_URL)
-      : (env.OLLAMA_HOST ?? persisted.host ?? DEFAULT_HOST)
+      : provider === "openrouter"
+        ? (env.OPENROUTER_BASE_URL ?? persisted.host ?? DEFAULT_OPENROUTER_BASE_URL)
+        : (env.OLLAMA_HOST ?? persisted.host ?? DEFAULT_HOST)
   );
-  const apiKey = env.OPENAI_API_KEY ?? persisted.apiKey ?? "";
+  const apiKey =
+    provider === "openrouter"
+      ? (env.OPENROUTER_API_KEY ?? env.OPENAI_API_KEY ?? persisted.apiKey ?? "")
+      : (env.OPENAI_API_KEY ?? persisted.apiKey ?? "");
   const timeoutMs = coerceTimeout(
     env.DISTILL_TIMEOUT_MS ?? String(persisted.timeoutMs ?? DEFAULT_TIMEOUT_MS)
   );
@@ -235,6 +241,7 @@ export function parseCommand(
   let apiKey = defaults.apiKey;
   let timeoutMs = defaults.timeoutMs;
   let thinking = defaults.thinking;
+  let hostExplicit = false;
   const questionParts: string[] = [];
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -262,6 +269,7 @@ export function parseCommand(
     if (token === "--host" || token.startsWith("--host=")) {
       const parsed = readFlagValue(argv, index, "--host");
       host = parsed.value;
+      hostExplicit = true;
       index = parsed.nextIndex;
       continue;
     }
@@ -300,9 +308,21 @@ export function parseCommand(
     throw new UsageError("A question is required.");
   }
 
-  if (provider === "openai" && !apiKey) {
+  // If the provider was changed via flag without an explicit host, re-derive the default host.
+  if (!hostExplicit && provider !== defaults.provider) {
+    host = normalizeHost(
+      provider === "openai"
+        ? (env.OPENAI_BASE_URL ?? persisted.host ?? DEFAULT_OPENAI_BASE_URL)
+        : provider === "openrouter"
+          ? (env.OPENROUTER_BASE_URL ?? persisted.host ?? DEFAULT_OPENROUTER_BASE_URL)
+          : (env.OLLAMA_HOST ?? persisted.host ?? DEFAULT_HOST)
+    );
+  }
+
+  if ((provider === "openai" || provider === "openrouter") && !apiKey) {
+    const envVar = provider === "openrouter" ? "OPENROUTER_API_KEY (or OPENAI_API_KEY)" : "OPENAI_API_KEY";
     throw new UsageError(
-      "An API key is required for the openai provider. Set OPENAI_API_KEY or use --api-key."
+      `An API key is required for the ${provider} provider. Set ${envVar} or use --api-key.`
     );
   }
 
@@ -329,10 +349,10 @@ export function formatUsage(): string {
     '  distill config provider openai',
     "",
     "Options:",
-    `  --provider <name>     LLM provider: ollama or openai (default: ${DEFAULT_PROVIDER})`,
+    `  --provider <name>     LLM provider: ollama, openai, or openrouter (default: ${DEFAULT_PROVIDER})`,
     `  --model <name>        Model name (default: ${DEFAULT_MODEL})`,
     `  --host <url>          API base URL (default: ${DEFAULT_HOST})`,
-    "  --api-key <key>       API key for openai provider (env: OPENAI_API_KEY)",
+    "  --api-key <key>       API key for openai/openrouter provider (env: OPENAI_API_KEY, OPENROUTER_API_KEY)",
     `  --timeout-ms <ms>     Request timeout in milliseconds (default: ${DEFAULT_TIMEOUT_MS})`,
     "  --thinking <bool>     Enable or disable model thinking (default: false)",
     "  --help                Show usage",

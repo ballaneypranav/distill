@@ -20,12 +20,19 @@ export async function requestOpenAI({
 
   try {
     const url = new URL("/v1/chat/completions", `${baseUrl}/`);
+    const headers: Record<string, string> = {
+      "content-type": "application/json",
+      authorization: `Bearer ${apiKey}`
+    };
+
+    if (new URL(baseUrl).hostname.includes("openrouter.ai")) {
+      headers["HTTP-Referer"] = "https://github.com/samuelfaj/distill";
+      headers["X-Title"] = "Distill CLI";
+    }
+
     const response = await fetchImpl(url, {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${apiKey}`
-      },
+      headers,
       body: JSON.stringify({
         model,
         messages: [{ role: "user", content: prompt }],

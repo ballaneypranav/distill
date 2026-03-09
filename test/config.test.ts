@@ -3,6 +3,7 @@ import { describe, expect, it } from "bun:test";
 import {
   DEFAULT_HOST,
   DEFAULT_MODEL,
+  DEFAULT_OPENROUTER_BASE_URL,
   DEFAULT_PROVIDER,
   DEFAULT_TIMEOUT_MS,
   parseCommand,
@@ -126,5 +127,64 @@ describe("parseCommand", () => {
 
   it("throws on missing question", () => {
     expect(() => parseCommand([], {}, {})).toThrow(UsageError);
+  });
+
+  it("throws when openrouter provider has no api key", () => {
+    expect(() =>
+      parseCommand(["--provider", "openrouter", "summarize"], {}, {})
+    ).toThrow(UsageError);
+  });
+
+  it("accepts openrouter provider with api key", () => {
+    const command = parseCommand(
+      ["--provider", "openrouter", "--api-key", "sk-or-test", "summarize"],
+      {},
+      {}
+    );
+
+    expect(command).toEqual({
+      kind: "run",
+      config: {
+        question: "summarize",
+        provider: "openrouter",
+        model: DEFAULT_MODEL,
+        host: DEFAULT_OPENROUTER_BASE_URL,
+        apiKey: "sk-or-test",
+        timeoutMs: DEFAULT_TIMEOUT_MS,
+        thinking: false
+      }
+    });
+  });
+
+  it("resolves openrouter host and api key from env", () => {
+    expect(
+      resolveRuntimeDefaults(
+        {
+          DISTILL_PROVIDER: "openrouter",
+          OPENROUTER_BASE_URL: "https://custom.openrouter.test/api/v1",
+          OPENROUTER_API_KEY: "sk-or-env"
+        },
+        {}
+      )
+    ).toEqual({
+      provider: "openrouter",
+      model: DEFAULT_MODEL,
+      host: "https://custom.openrouter.test/api/v1",
+      apiKey: "sk-or-env",
+      timeoutMs: DEFAULT_TIMEOUT_MS,
+      thinking: false
+    });
+  });
+
+  it("falls back to OPENAI_API_KEY when OPENROUTER_API_KEY is absent", () => {
+    const result = resolveRuntimeDefaults(
+      {
+        DISTILL_PROVIDER: "openrouter",
+        OPENAI_API_KEY: "sk-openai-fallback"
+      },
+      {}
+    );
+
+    expect(result.apiKey).toBe("sk-openai-fallback");
   });
 });
